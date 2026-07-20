@@ -34,3 +34,10 @@ Thumbs.db
 *.db
 postgres_data/
 ollama_data/
+
+# History Files
+*.history
+.bash_history
+.zsh_history
+.python_history
+.node_repl_history
