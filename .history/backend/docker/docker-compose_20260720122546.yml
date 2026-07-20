@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://openmesh:openmesh@postgres:5432/openmesh
+      - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=phi3:3.8b
+      - DEBUG=true
+    depends_on:
+      - postgres
+      - redis
+      - ollama
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - openmesh
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - openmesh
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=openmesh
+      - POSTGRES_PASSWORD=openmesh
+      - POSTGRES_DB=openmesh
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - openmesh
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - openmesh
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - openmesh
+
+volumes:
+  postgres_data:
+  ollama_data:
+
+networks:
+  openmesh:
+    driver: bridge
